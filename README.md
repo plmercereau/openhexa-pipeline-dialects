@@ -20,7 +20,7 @@ def my_pipeline(src_dataset: Dataset):
     values = aggregate(
         # New "get_file_url" helper that gets the signed URL of the dataset file.
         # The "version" argument is optional and defaults to "latest"
-        src_dataset.get_file_url(version="latest", filename="my_file.parquet"),
+        src_dataset.get_file_url(filename="my_file.parquet", version="latest"),
         'mean'
     )
     print_values(values)
@@ -144,7 +144,7 @@ def task2(threshold: int):
 )
 def my_pipeline(src_dataset: Dataset):
     aggregate(
-        src_dataset.get_file_url(version="latest", filename="my_file.parquet"),
+        src_dataset.get_file_url(filename="my_file.parquet", version="latest"),
         'mean'
     )
 
@@ -182,7 +182,7 @@ my_pipeline.task(
 def my_pipeline(src_dataset: Dataset):
     # Call the task with parameters
     aggregate_from_file(
-        src_dataset.get_file_url(version="latest", filename="data.parquet"),
+        src_dataset.get_file_url(filename="data.parquet", version="latest"),
         'mean'
     )
 
@@ -306,7 +306,7 @@ def task4(status: str, created_at: date, country: str):
     type=Dataset
 )
 def my_pipeline(src_dataset: Dataset):
-    task1(src_dataset.get_file_url(version="latest", filename="my_file.parquet"))
+    task1(src_dataset.get_file_url(filename="my_file.parquet", version="latest"))
 
 
 @my_pipeline.task(dialect="R")
