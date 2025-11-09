@@ -209,8 +209,8 @@ my_pipeline.task(
     outputs=[
         OUTPUT.logger(LOG_LEVELS.INFO),
         OUTPUT.dataset_file(
-            dataset=my_pipeline.dataset('argument_name'),
-            version="latest",
+            dataset=my_pipeline.datasets.parameter_name,
+            version="latest", # Optional, defaults to "latest"
             filename='output.parquet'
         ),
         OUTPUT.file(path="path/to/file.csv")
@@ -265,7 +265,7 @@ def my_pipeline(database: CustomConnection):
 
 @my_pipeline.task(
     dialect="postgres",
-    connection=my_pipeline.connection("database").get("URL")
+    connection=my_pipeline.connections.database.get("URL")
 )
 def task1():
     return """
@@ -373,10 +373,13 @@ def my_pipeline(backend):
 
 @my_pipeline.task(
     dialect="graphql",
-    connection=my_pipeline.connection("backend").get("URL"),
-    method="POST",
+    # Both attribute access and dictionary access are supported. Both are equivalent:
+    # my_pipeline.connections.backend.URL
+    # my_pipeline.connections.backend.get("URL")
+    connection=my_pipeline.connections.backend.get("URL"),
+    method="POST", # Optional, defaults to "POST"
     headers={
-        "Authorization": f"Bearer {my_pipeline.connection('backend').get('API_KEY')}"
+        "Authorization": f"Bearer {my_pipeline.connections.backend.API_KEY}"
     }
 )
 def task1():
