@@ -48,7 +48,7 @@ def aggregate(file_url: str, stat: str):
           variable, count(*), sum(value) as sum
         FROM read_parquet($1) 
         WHERE stat_type = $2
-        GROUP BY variable
+        GROUP BY variable;
         """,
         [file_url, stat]
     )
@@ -88,7 +88,7 @@ def print_values(values: pd.DataFrame):
 @my_pipeline.task(dialect="duckdb")
 def task1():
     return """
-    select 1 as x
+    SELECT 1 as x;
     """
 ```
 
@@ -121,7 +121,7 @@ from openhexa.sdk.pipelines import dialect
 @dialect("duckdb")
 def task1():
     return """
-    select 1 as x
+    SELECT 1 as x;
     """
 ```
 
@@ -131,7 +131,7 @@ It may be useful at a later stage for configuring the dialect further, for insta
 @dialect("postgres", connection="postgres://user@server:5432/database")
 def task1():
     return """
-    select 1 as x
+    SELECT 1 as x;
     """
 ```
 
@@ -144,13 +144,12 @@ Tasks can return:
 ```python
 @my_pipeline.task(dialect="duckdb")
 def task1():
-    """Simple query returning a string."""
-    return "SELECT 1 as x"
+    return "SELECT 1 as x;"
 
 @my_pipeline.task(dialect="duckdb")
 def task2(threshold: int):
-    """Parameterized query using $1 placeholders (DuckDB style)."""
-    return ("SELECT * FROM table WHERE value > $1", [threshold])
+    """Parameterized query using $x placeholders."""
+    return ("SELECT * FROM table WHERE value > $1;", [threshold])
 ```
 
 ## Dialect task parameters
@@ -177,7 +176,7 @@ def aggregate(file_url: str, stat: str):
           variable, count(*), sum(value) as sum
         FROM read_parquet($1) 
         WHERE stat_type = $2
-        GROUP BY variable
+        GROUP BY variable;
         """,
         [file_url, stat]
     )
@@ -193,7 +192,7 @@ def aggregate(file_url: str, stat: str):
           variable, count(*), sum(value) as sum
         FROM read_parquet($file_url) 
         WHERE stat_type = $stat
-        GROUP BY variable
+        GROUP BY variable;
         """,
         {
             file_url: file_url, 
@@ -273,7 +272,7 @@ Each dialect returns different data types:
 @my_pipeline.task(dialect="postgres")
 def task1():
     return """
-    select 1 as x
+    SELECT 1 as x;
     """
 ```
 
@@ -282,7 +281,7 @@ def task1():
 @my_pipeline.task(dialect="postgres", connection="postgres://...")
 def task2():
     return """
-    select 1 as x
+    SELECT 1 as x;
     """
 ```
 
@@ -307,7 +306,7 @@ def my_pipeline(database: CustomConnection):
 )
 def task1():
     return """
-    select 1 as x
+    SELECT 1 as x;
     """
 ```
 
