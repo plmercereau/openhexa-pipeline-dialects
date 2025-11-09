@@ -46,8 +46,8 @@ def aggregate(file_url: str, stat: str):
         """
         SELECT 
           variable, count(*), sum(value) as sum
-        FROM read_parquet(?) 
-        WHERE stat_type = ?
+        FROM read_parquet($1) 
+        WHERE stat_type = $2
         GROUP BY variable
         """,
         [file_url, stat]
@@ -129,11 +129,11 @@ def task1():
 
 @my_pipeline.task(dialect="duckdb")
 def task2(threshold: int):
-    """Parameterized query using ? placeholders (DuckDB style)."""
-    return ("SELECT * FROM table WHERE value > ?", [threshold])
+    """Parameterized query using $1 placeholders (DuckDB style)."""
+    return ("SELECT * FROM table WHERE value > $1", [threshold])
 ```
 
-## Task arguments
+## Dialect task parameters
 
 ```python
 @pipeline("my-pipeline")
@@ -155,14 +155,32 @@ def aggregate(file_url: str, stat: str):
         """
         SELECT 
           variable, count(*), sum(value) as sum
-        FROM read_parquet(?) 
-        WHERE stat_type = ?
+        FROM read_parquet($1) 
+        WHERE stat_type = $2
         GROUP BY variable
         """,
         [file_url, stat]
     )
 ```
+### Named parameters
 
+```python
+@my_pipeline.task(dialect="duckdb")
+def aggregate(file_url: str, stat: str):
+    return (
+        """
+        SELECT 
+          variable, count(*), sum(value) as sum
+        FROM read_parquet($file_url) 
+        WHERE stat_type = $stat
+        GROUP BY variable
+        """,
+        {
+            file_url: file_url, 
+            stat: stat
+        }
+    )
+```
 
 ## Executing code from another file
 
