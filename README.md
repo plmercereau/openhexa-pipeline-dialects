@@ -377,7 +377,7 @@ def my_pipeline():
 def task1(workspace_slug: str):
     return (
         """
-        query($workspace_slug: String!) {
+        query WorkspaceMembers ($workspace_slug: String!) {
           workspace(slug: $workspace_slug) {
             members {
               items {
