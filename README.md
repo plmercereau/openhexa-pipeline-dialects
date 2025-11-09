@@ -98,7 +98,7 @@ my_pipeline.task(
     name="task2",
     dialect="duckdb",
     content="""
-    SELECT * FROM read_parquet(get_dataset_file_url('pathways-senegal-2019-dhs8/sen-2019dhs8-aggregated-metrics/latest/metrics.parquet'));
+    SELECT * FROM 'https://huggingface.co/datasets/ibm-research/duorc/resolve/refs%2Fconvert%2Fparquet/ParaphraseRC/train/0000.parquet';
     """
 )
 ```
