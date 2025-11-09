@@ -103,12 +103,32 @@ my_pipeline.task(
 )
 ```
 
+This syntax may turn to be useful when using an external source that does not require parameters:
+
+```python
+my_pipeline.task(
+    name="task2",
+    dialect="duckdb",
+    source="./script.sql"
+)
+```
+
 ### The @dialect decorator
 ```python
 from openhexa.sdk.pipelines import dialect
 
 @my_pipeline.task
 @dialect("duckdb")
+def task1():
+    return """
+    select 1 as x
+    """
+```
+
+It may be useful at a later stage for configuring the dialect further, for instance:
+
+```python
+@dialect("postgres", connection="postgres://user@server:5432/database")
 def task1():
     return """
     select 1 as x
