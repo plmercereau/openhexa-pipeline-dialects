@@ -34,8 +34,8 @@ def my_pipeline(src_dataset: Dataset):
         OUTPUT.logger(LOG_LEVELS.INFO),
         # Write the file into a file of the given dataset
         OUTPUT.dataset_file(
-            # New "dataset" helper that returns the dataset defined in the pipeline parameters
-            dataset=my_pipeline.dataset('src_dataset'),
+            # New "datasets" helper that returns the dataset defined in the pipeline parameters
+            dataset=my_pipeline.datasets.src_dataset,
             version="latest", # Optional parameter. Defaults to "latest"
             filename='aggregated.parquet' # detects the format from the extension of the file name
         ),
