@@ -145,19 +145,6 @@ Tasks can return:
 - A tuple of `(query_string, parameters_list)` for parameterized queries
 
 ```python
-@my_pipeline.task(dialect="duckdb")
-def task1():
-    return "SELECT 1 as x;"
-
-@my_pipeline.task(dialect="duckdb")
-def task2(threshold: int):
-    """Parameterized query using $x placeholders."""
-    return ("SELECT * FROM table WHERE value > $1;", [threshold])
-```
-
-## Dialect task parameters
-
-```python
 @pipeline("my-pipeline")
 @parameter(
     "src_dataset",
@@ -184,6 +171,7 @@ def aggregate(file_url: str, stat: str):
         [file_url, stat]
     )
 ```
+
 ### Named parameters
 
 ```python
