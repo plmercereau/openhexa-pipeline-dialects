@@ -53,6 +53,19 @@ def aggregate(file_url: str, stat: str):
         [file_url, stat]
     )
 
+@my_pipeline.task(dialect="duckdb", source="./aggregation_query.sql")
+def aggregate_alternative(file_url: str, stat: str):
+    """
+    Alternative approach: Load query from an external SQL file.
+    
+    Benefits:
+    - Better IDE support (syntax highlighting, linting)
+    - Improved maintainability for complex queries
+    - Cleaner separation of concerns
+    
+    Note: When using 'source', the function returns only the parameters list.
+    """
+    return [file_url, stat]
 
 @my_pipeline.task
 def print_values(values: pd.DataFrame):
@@ -111,12 +124,12 @@ Tasks can return:
 ```python
 @my_pipeline.task(dialect="duckdb")
 def task1():
-    # Simple query
+    """Simple query returning a string."""
     return "SELECT 1 as x"
 
 @my_pipeline.task(dialect="duckdb")
 def task2(threshold: int):
-    # Parameterized query using ? placeholders
+    """Parameterized query using ? placeholders (DuckDB style)."""
     return ("SELECT * FROM table WHERE value > ?", [threshold])
 ```
 
@@ -153,12 +166,36 @@ def aggregate(file_url: str, stat: str):
 
 ## Executing code from another file
 
+### Without parameters
 ```python
 my_pipeline.task(
     name="task3",
     dialect="duckdb",
     source="./my-instruction.sql"
 )
+```
+
+### With parameters
+```python
+@pipeline("my-pipeline")
+@parameter("src_dataset", name="Input dataset", type=Dataset)
+def my_pipeline(src_dataset: Dataset):
+    # Call the task with parameters
+    aggregate_from_file(
+        src_dataset.get_file_url(version="latest", filename="data.parquet"),
+        'mean'
+    )
+
+
+@my_pipeline.task(dialect="duckdb", source="./aggregation_query.sql")
+def aggregate_from_file(file_url: str, stat: str):
+    """
+    Load query from external SQL file and pass parameters to it.
+    
+    The SQL file should use ? placeholders (DuckDB) or $1, $2, etc. (Postgres).
+    When using 'source', return only the parameters list.
+    """
+    return [file_url, stat]
 ```
 
 ## Outputs
@@ -242,8 +279,11 @@ from datetime import date
 
 @my_pipeline.task(dialect="postgres")
 def task4(status: str, created_at: date, country: str):
-    # Postgres uses $1, $2, $3 placeholders for parameters
-    # Return tuple of (query, [parameters])
+    """
+    Parameterized Postgres query using $1, $2, $3 placeholders.
+    
+    Returns tuple of (query, [parameters]).
+    """
     return (
         """
         SELECT id, name, email
@@ -271,8 +311,11 @@ def my_pipeline(src_dataset: Dataset):
 
 @my_pipeline.task(dialect="R")
 def task1(url: str):
-    # Arguments are passed as command-line arguments to the R script
-    # The return tuple contains (R_code, [arguments])
+    """
+    R script with parameters passed as command-line arguments.
+    
+    Returns tuple of (R_code, [arguments]).
+    """
     return """
     library(arrow)
     args <- commandArgs(trailingOnly = TRUE)
