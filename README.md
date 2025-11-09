@@ -128,6 +128,9 @@ def task1():
 It may be useful at a later stage for configuring the dialect further, for instance:
 
 ```python
+from openhexa.sdk.pipelines import dialect
+
+@my_pipeline.task
 @dialect("postgres", connection="postgres://user@server:5432/database")
 def task1():
     return """
