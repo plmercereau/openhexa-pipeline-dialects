@@ -138,11 +138,13 @@ def task1():
     """
 ```
 
-## Parameterized queries
+## Parameters
 
 Tasks can return:
 - A simple string containing the query/code
-- A tuple of `(query_string, parameters_list)` for parameterized queries
+- A tuple of `(query_string, parameters)` for parameterised queries, Parameters can either be:
+  - a list of positional parameters that maps to `$1, $2, etc` arguments (DuckDB, Postgres), or command-line arguments (R)
+  - a dict of named parameters (DuckDB, GraphQL)
 
 ```python
 @pipeline("my-pipeline")
@@ -192,6 +194,15 @@ def aggregate(file_url: str, stat: str):
     )
 ```
 
+## Return types
+
+Each dialect returns different data types:
+- **DuckDB**: Returns a pandas DataFrame
+- **Postgres**: Returns a pandas DataFrame
+- **R**: Returns the output printed to stdout as a string
+- **GraphQL**: Returns a dictionary/JSON object
+
+
 ## Executing code from another file
 
 ### Without parameters
@@ -216,14 +227,26 @@ def my_pipeline(src_dataset: Dataset):
 
 
 @my_pipeline.task(dialect="duckdb", source="./aggregation_query.sql")
-def aggregate_from_file(file_url: str, stat: str):
+def task_with_positional_parameters(file_url: str, stat: str):
     """
     Load query from external SQL file and pass parameters to it.
     
-    The SQL file should use ? placeholders (DuckDB) or $1, $2, etc. (Postgres).
+    The SQL file should use $1, $2, etc. placeholders (DuckDB, Postgres)
     When using 'source', return only the parameters list.
     """
     return [file_url, stat]
+
+@my_pipeline.task(dialect="duckdb", source="./aggregation_query.sql")
+def tasked_with_named_parameters(file_url: str, stat: str):
+    """
+    The SQL file should use $file_url and $stat placeholders.
+    This syntax works with DuckDB and GraphQL but not necessarily with other dialects e.g. Postgres.
+    When using 'source', return only the parameters dict.
+    """
+    return {
+        "file_url": file_user,
+        "stat": stat
+    }
 ```
 
 ## Outputs
@@ -247,14 +270,6 @@ my_pipeline.task(
 ```
 
 ## Other dialects
-
-### Return types by dialect
-
-Each dialect returns different data types:
-- **DuckDB**: Returns a pandas DataFrame
-- **Postgres**: Returns a pandas DataFrame
-- **R**: Returns the output printed to stdout as a string
-- **GraphQL**: Returns a dictionary/JSON object
 
 ### Postgres
 
@@ -301,14 +316,14 @@ def task1():
     """
 ```
 
-#### Parameterized Postgres queries
+#### Parameterised Postgres queries
 ```python
 from datetime import date
 
 @my_pipeline.task(dialect="postgres")
 def task4(status: str, created_at: date, country: str):
     """
-    Parameterized Postgres query using $1, $2, $3 placeholders.
+    Parameterised Postgres query using $1, $2, $3 placeholders.
     
     Returns tuple of (query, [parameters]).
     """
