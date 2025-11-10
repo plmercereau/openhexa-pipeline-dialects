@@ -402,7 +402,9 @@ def task1(workspace_slug: str):
           }
         }
         """,
-        {"workspace_slug": workspace_slug}
+        {
+            "workspace_slug": workspace_slug
+        }
     )
 ```
 
