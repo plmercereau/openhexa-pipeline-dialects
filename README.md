@@ -1,5 +1,7 @@
 # DuckDB and other additional dialects in OpenHexa pipelines
 
+Status: draft
+
 ## Full DuckDB example
 ```python
 import pandas as pd
@@ -197,10 +199,11 @@ def aggregate(file_url: str, stat: str):
 ## Return types
 
 Each dialect returns different data types:
-- **DuckDB**: Returns a pandas DataFrame
-- **Postgres**: Returns a pandas DataFrame
-- **R**: Returns the output printed to stdout as a string
-- **GraphQL**: Returns a dictionary/JSON object
+- **DuckDB**: Returns a pandas DataFrame.
+- **Postgres**: Returns a pandas DataFrame.
+- **R**: Returns a pandas DataFrame. 
+  - Note: the R script must write its output to the `OH_TASK_OUTPUT` environment variable path as a parquet file, which will then be read and returned as a DataFrame.
+- **GraphQL**: Returns a dictionary/JSON object containing the query response.
 
 
 ## Executing code from another file
@@ -359,13 +362,17 @@ def task1(url: str):
     
     Returns tuple of (R_code, [arguments]).
     """
-    return """
-    library(arrow)
-    args <- commandArgs(trailingOnly = TRUE)
-    url <- args[1]
-    df <- read_parquet(url)
-    print(df)
-    """, [url]
+    return (
+        """
+        library(arrow)
+        args <- commandArgs(trailingOnly = TRUE)
+        url <- args[1]
+        df <- read_parquet(url)
+        output_path <- Sys.getenv("OH_TASK_OUTPUT")
+        write_parquet(df, output_path)
+        """,
+        [url]
+    )
 ```
 
 ### GraphQL
