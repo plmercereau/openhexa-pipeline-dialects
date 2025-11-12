@@ -20,9 +20,8 @@ from openhexa.sdk.logger import LOG_LEVELS, logger
 def my_pipeline(src_dataset: Dataset):
     # The DuckDB task returns a dataframe
     values = aggregate(
-        # New "get_file_url" helper that gets the signed URL of the dataset file.
-        # The "version" argument is optional and defaults to "latest"
-        src_dataset.get_file_url(filename="my_file.parquet", version="latest"),
+        src_dataset,
+        "my_file.parquet",
         'mean'
     )
     print_values(values)
@@ -43,7 +42,10 @@ def my_pipeline(src_dataset: Dataset):
         ),
     ]
 )
-def aggregate(file_url: str, stat: str):
+def aggregate(dataset: Dataset, filename:str, stat: str):
+    # New "get_file_url" helper that gets the signed URL of the dataset file.
+    # The "version" argument is optional and defaults to "latest"
+    file_url = dataset.get_file_url(filename=filename, version="latest"),
     return (
         """
         SELECT 
@@ -56,7 +58,7 @@ def aggregate(file_url: str, stat: str):
     )
 
 @my_pipeline.task(dialect="duckdb", source="./aggregation_query.sql")
-def aggregate_alternative(file_url: str, stat: str):
+def aggregate_alternative(dataset: Dataset, filename: str, stat: str):
     """
     Alternative approach: Load query from an external SQL file.
     
@@ -67,6 +69,7 @@ def aggregate_alternative(file_url: str, stat: str):
     
     Note: When using 'source', the function returns only the parameters list.
     """
+    file_url = dataset.get_file_url(filename=filename, version="latest"),
     return [file_url, stat]
 
 @my_pipeline.task
@@ -157,13 +160,15 @@ Tasks can return:
 )
 def my_pipeline(src_dataset: Dataset):
     aggregate(
-        src_dataset.get_file_url(filename="my_file.parquet", version="latest"),
+        src_dataset
+        "my_file.parquet",
         'mean'
     )
 
 
 @my_pipeline.task(dialect="duckdb")
-def aggregate(file_url: str, stat: str):
+def aggregate(dataset: Dataset, filename: str, stat: str):
+    file_url = src_dataset.get_file_url(filename)
     return (
         """
         SELECT 
@@ -224,30 +229,33 @@ my_pipeline.task(
 def my_pipeline(src_dataset: Dataset):
     # Call the task with parameters
     aggregate_from_file(
-        src_dataset.get_file_url(filename="data.parquet", version="latest"),
+        dataset,
+        "data.parquet",
         'mean'
     )
 
 
 @my_pipeline.task(dialect="duckdb", source="./aggregation_query.sql")
-def task_with_positional_parameters(file_url: str, stat: str):
+def task_with_positional_parameters(dataset: Dataset, filename: str, stat: str):
     """
     Load query from external SQL file and pass parameters to it.
     
     The SQL file should use $1, $2, etc. placeholders (DuckDB, Postgres)
     When using 'source', return only the parameters list.
     """
+    file_url = dataset.get_file_url(filename)
     return [file_url, stat]
 
 @my_pipeline.task(dialect="duckdb", source="./aggregation_query.sql")
-def tasked_with_named_parameters(file_url: str, stat: str):
+def tasked_with_named_parameters(dataset: Dataset, filename: str, stat: str):
     """
     The SQL file should use $file_url and $stat placeholders.
     This syntax works with DuckDB and GraphQL but not necessarily with other dialects e.g. Postgres.
     When using 'source', return only the parameters dict.
     """
+    file_url = dataset.get_file_url(filename)
     return {
-        "file_url": file_user,
+        "file_url": file_url,
         "stat": stat
     }
 ```
@@ -352,16 +360,17 @@ def task4(status: str, created_at: date, country: str):
     type=Dataset
 )
 def my_pipeline(src_dataset: Dataset):
-    task1(src_dataset.get_file_url(filename="my_file.parquet", version="latest"))
+    task1(src_dataset, "my_file.parquet")
 
 
 @my_pipeline.task(dialect="R")
-def task1(url: str):
+def task1(dataset: Dataset, filename: str):
     """
     R script with parameters passed as command-line arguments.
     
     Returns tuple of (R_code, [arguments]).
     """
+    url = dataset.get_file_url(filename)
     return (
         """
         library(arrow)
@@ -383,11 +392,12 @@ from openhexa.sdk import pipeline, workspace
 
 @pipeline("my-pipeline")
 def my_pipeline():
-    json_payload = task1(workspace.current_workspace.slug)
+    json_payload = query_oh_api_task(workspace.current_workspace.slug)
 
 
 @my_pipeline.task(dialect="graphql")
-def task1(workspace_slug: str):
+def query_oh_api_task(workspace_slug: str):
+    workspace_slug = 
     return (
         """
         query WorkspaceMembers ($workspace_slug: String!) {
@@ -420,7 +430,7 @@ from openhexa.sdk import parameter, pipeline, workspace
     type=CustomConnection
 )
 def my_pipeline(backend):
-    json_payload = task1()
+    json_payload = get_domains_task()
 
 
 @my_pipeline.task(
@@ -428,13 +438,13 @@ def my_pipeline(backend):
     # Both attribute access and dictionary access are supported. Both are equivalent:
     # my_pipeline.connections.backend.URL
     # my_pipeline.connections.backend.get("URL")
-    connection=my_pipeline.connections.backend.get("URL"),
+    connection=my_pipeline.connections.backend.URL,
     method="POST", # Optional, defaults to "POST"
     headers={
         "Authorization": f"Bearer {my_pipeline.connections.backend.API_KEY}"
     }
 )
-def task1():
+def get_domains_task():
     return """
     query GetDomains {
       domains(pagination: { pageSize: 500 }, sort: ["code:asc"]) {
